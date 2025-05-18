@@ -50,12 +50,14 @@ def get_face_roi(img):
     mid_col = (min_col + max_col) // 2
     
     # Empaquetamos los datos para regresarlos
-    top_left = (min_col, min_row)
-    bottom_right = (max_col, max_row)
+    top_left = (min_col, min_row) # Top left
+    bottom_left = (min_col, max_row) # Bottom left
+    top_right = (max_col, min_row) # Top right
+    bottom_right = (max_col, max_row) # Bottom right
     
     mid_point = (mid_col, mid_row)
     
-    return top_left, bottom_right, mid_point
+    return top_left, top_right, bottom_left, bottom_right, mid_point
 
 if __name__ == '__main__':
        img = cv2.imread('imgs/frame10.jpg')     
