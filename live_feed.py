@@ -5,6 +5,9 @@ from skin_face_detection import get_face_roi
 # Abrir webcam por defectro
 cam = cv2.VideoCapture(0)
 
+# Bandera para utilizar color en HSV
+formato_hsv = True
+
 # Tamaño del frame
 frame_width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -63,7 +66,14 @@ while True:
     
     # Se elige la imagen y se aplica la funcion para detectar el rostro
     ret, frame = cam.read()
-    top_left, top_rigth, bottom_left, bottom_right, mid_point = get_face_roi(frame)
+    
+    # Conversion a HSV
+    if formato_hsv:
+        frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        frame_hsv = frame_hsv[:,:,:2]
+        top_left, top_rigth, bottom_left, bottom_right, mid_point = get_face_roi(frame_hsv)
+    else:
+        top_left, top_rigth, bottom_left, bottom_right, mid_point = get_face_roi(frame)
     
     # Se usa el filtro de kalman para predecir el siguiente estado y se
     # guardan las coordenadas

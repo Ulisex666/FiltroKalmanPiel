@@ -3,15 +3,33 @@ import cv2
 from scipy.stats import multivariate_normal
 
 # Medias y covarianza obtenidas de tareas anteriores
-skin_mean = np.array([109.04378154, 130.19204512, 172.47343425])
-skin_cov = np.array([[1557.55025745, 1630.09297116, 1814.77250065],
-       [1630.09297116, 1731.13069521, 1941.66919639],
-       [1814.77250065, 1941.66919639, 2250.5592615 ]])
 
-fondo_mean = np.array([ 95.55063731, 106.95504056, 110.26025492])
-fondo_cov = np.array([[4486.90316045, 4649.32282388, 4487.6689383 ],
-       [4649.32282388, 5074.34657037, 4956.60725216],
-       [4487.6689383 , 4956.60725216, 5081.15951645]])
+# Bandera para usar formato RGB o HSV
+formato_hsv = True
+
+if formato_hsv:
+       # Datos en HSV, eliminando el canal V
+       skin_mean = np.array([10.12600178, 98.29919858])
+       skin_cov = np.array([[  5.88897499,  -3.92029384],
+              [ -3.92029384, 396.50657795]])
+
+       fondo_mean = np.array([44.84623407, 51.63395133])
+       fondo_cov = np.array([[1732.49356271, -370.70399196],
+              [-370.70399196, 1929.23776246]])
+else:
+       # Datos en RGB
+       skin_mean = np.array([109.04378154, 130.19204512, 172.47343425])
+       skin_cov = np.array([[1557.55025745, 1630.09297116, 1814.77250065],
+              [1630.09297116, 1731.13069521, 1941.66919639],
+              [1814.77250065, 1941.66919639, 2250.5592615 ]])
+
+       fondo_mean = np.array([ 95.55063731, 106.95504056, 110.26025492])
+       fondo_cov = np.array([[4486.90316045, 4649.32282388, 4487.6689383 ],
+              [4649.32282388, 5074.34657037, 4956.60725216],
+              [4487.6689383 , 4956.60725216, 5081.15951645]])
+
+
+
 
 # Se crea el modelo para el analisis de la imagen
 piel_norm = multivariate_normal(skin_mean, skin_cov).pdf
