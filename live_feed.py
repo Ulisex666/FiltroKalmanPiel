@@ -1,12 +1,13 @@
 import cv2
 import numpy as np
-from skin_face_detection import get_face_roi
+from skin_face_detection import get_face_roi, formato_hsv
 
 # Abrir webcam por defectro
 cam = cv2.VideoCapture(0)
 
-# Bandera para utilizar color en HSV
-formato_hsv = True
+# Formato hsv es una bandera para decidir si se utiliza 
+# ese formato en el proceso. Se importa de skin_face_detection para
+# sincronizar ambos programas
 
 # Tamaño del frame
 frame_width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -31,7 +32,7 @@ measurament_matrix_2d = np.array(
 noise_process_matrix = np.eye(4, dtype=np.float32)*0.3
 
 # Matriz de ruido para la medicion
-noise_measurement_matrix = np.eye(2, dtype=np.float32)*0.1
+noise_measurement_matrix = np.eye(2, dtype=np.float32)*0.3
 
 # Matriz de covarianza para el error
 error_cov = np.eye(4, dtype=np.float32)
@@ -67,43 +68,56 @@ while True:
     # Se elige la imagen y se aplica la funcion para detectar el rostro
     ret, frame = cam.read()
     
-    # Conversion a HSV
+    # Conversion a HSV. Debe sincronizarse manualmente con 
     if formato_hsv:
         frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         frame_hsv = frame_hsv[:,:,:2]
         top_left, top_rigth, bottom_left, bottom_right, mid_point = get_face_roi(frame_hsv)
     else:
         top_left, top_rigth, bottom_left, bottom_right, mid_point = get_face_roi(frame)
+        
+    # Nota: mid_point tiene las coordenadas "al reves", por lo que se maneja de manera diferente
+    # a los demas puntos
     
     # Se usa el filtro de kalman para predecir el siguiente estado y se
     # guardan las coordenadas
     prediccion = kalman_midpoint.predict()
     x_predict = int(prediccion[0])
     y_predict = int(prediccion[1])
-    
+    v_x = float(prediccion[2])
+    v_y = float(prediccion[3])
     # Se corrige la prediccion con la medicion obtenida
-    kalman_midpoint.correct(np.array([mid_point[1], mid_point[0]], dtype=np.float32))
-
-    # Se muestra la posicion corregida y la predecida
+    correcion = kalman_midpoint.correct(np.array([mid_point[1], mid_point[0]], dtype=np.float32))
+    x_corregido = int(correcion[0])
+    y_corregido = int(correcion[1])
+    vx_corregido = float(correcion[2])
+    vy_corregido = float(correcion[3])
+    
+    # Se muestra la posicion corregida y la predecida, junto a la medicion
+    
+    # Medicion en amarillo
+    cv2.drawMarker(frame, (mid_point[0], mid_point[1]), color=[0, 255, 255], markerType=cv2.MARKER_DIAMOND, thickness=4, markerSize=20)
+    cv2.putText(frame, f"Medicion: x ={mid_point[0]}, y = {mid_point[1]}", 
+                (400 , 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255 , 255), 2)  
+    
     
     # Posicion predicha en rojo
     cv2.drawMarker(frame, (y_predict, x_predict), color=[0, 0, 255], markerType=cv2.MARKER_STAR, thickness=4, markerSize=20)
-    cv2.putText(frame, f"Prediccion (x, y): ({x_predict}, {y_predict})", 
-                (y_predict +10 , x_predict - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0 , 0), 2)  
+    cv2.putText(frame, f"Prediccion: x={y_predict}, y={x_predict}, v_x={v_y:.2f}, v_y={v_x:.2f}", 
+                (230, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0 , 255), 2)
+
     
     # Posicion corregida en verde
-    cv2.drawMarker(frame, mid_point, color=[0, 255, 0], markerType=cv2.MARKER_CROSS, thickness=4, markerSize=20)
-    cv2.putText(frame, f"Medicion (x, y): ({mid_point[0]}, {mid_point[1]})", 
-                (mid_point[0] + 10, mid_point[1] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255  ), 2)
+    cv2.drawMarker(frame, (y_corregido, x_corregido), color=[0, 255, 0], markerType=cv2.MARKER_CROSS, thickness=4, markerSize=20)
+    cv2.putText(frame, f"Correccion: x={y_corregido}, y={x_corregido}, v_x={vy_corregido:.2f}, v_y={vx_corregido:.2f}", 
+                (230, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
  
     # Dibuja la region marcada como rostro
     points = np.array([top_left, bottom_left, bottom_right, top_rigth], np.int32)
 
-    cv2.polylines(frame, [points], True, (0,255,0), 2)
-    # cv2.drawMarker(frame, (mid_x, mid_y), color=[0,0,255], markerType=cv2.MARKER_SQUARE,
-    #             thickness=4, markerSize=50)
+    cv2.polylines(frame, [points], True, (255,0,0), 2)
 
-    if frame_count % 10 == 0:
+    if frame_count % 15 == 0:
       cv2.imshow('Camera', frame)
     
     # Se actualiza el conteo de frames
