@@ -35,7 +35,7 @@ noise_process_matrix = np.eye(4, dtype=np.float32)*0.3
 noise_measurement_matrix = np.eye(2, dtype=np.float32)*0.3
 
 # Matriz de covarianza para el error
-error_cov = np.eye(4, dtype=np.float32)
+error_cov = np.eye(4, dtype=np.float32)*0.2
 
 # Inicializacion del filtro de Kalman. parte de OpenCV
 # Buscamos predecir la posicion del centroide en el frame k.
@@ -100,7 +100,6 @@ while True:
     cv2.putText(frame, f"Medicion: x ={mid_point[0]}, y = {mid_point[1]}", 
                 (400 , 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255 , 255), 2)  
     
-    
     # Posicion predicha en rojo
     cv2.drawMarker(frame, (y_predict, x_predict), color=[0, 0, 255], markerType=cv2.MARKER_STAR, thickness=4, markerSize=20)
     cv2.putText(frame, f"Prediccion: x={y_predict}, y={x_predict}, v_x={v_y:.2f}, v_y={v_x:.2f}", 
@@ -117,11 +116,12 @@ while True:
 
     cv2.polylines(frame, [points], True, (255,0,0), 2)
 
-    if frame_count % 15 == 0:
+    if frame_count % 5 == 0:
       cv2.imshow('Camera', frame)
     
     # Se actualiza el conteo de frames
     frame_count += 1
+    
     
     # Cerrar loop principal con q
     if cv2.waitKey(1) == ord('q'):
