@@ -32,8 +32,8 @@ else:
 
 
 # Se crea el modelo para el analisis de la imagen
-piel_norm = multivariate_normal(skin_mean, skin_cov).pdf
-fondo_norm = multivariate_normal(fondo_mean, fondo_cov).pdf
+piel_pdf = multivariate_normal(skin_mean, skin_cov).pdf
+fondo_pdf = multivariate_normal(fondo_mean, fondo_cov).pdf
 
 # Probabilidades obtenidas de tareas anteriores
 priori_piel = 0.5
@@ -46,8 +46,8 @@ def get_face_roi(img):
 
     # Calculamos la probabilidad de ser fondo o piel para cada pixel
     # en la imagen
-    img_piel_prob = piel_norm(img) * priori_piel
-    img_fondo_prob = fondo_norm(img) * priori_fondo
+    img_piel_prob = piel_pdf(img) * priori_piel
+    img_fondo_prob = fondo_pdf(img) * priori_fondo
     
     # Verificamos que probabilidad es mayor para cada pixel
     skin_pixels = np.asarray(img_piel_prob > img_fondo_prob).nonzero()
@@ -77,16 +77,30 @@ def get_face_roi(img):
     
     return top_left, top_right, bottom_left, bottom_right, mid_point
 
-if __name__ == '__main__':
-       img = cv2.imread('imgs/frame10.jpg')     
-       top_left, bottom_right, mid_point = get_face_roi(img)
-       print(top_left, bottom_right)
-       cv2.rectangle(img, top_left, bottom_right, (0, 255, 0), 4)
-       cv2.drawMarker(img, mid_point, color=[0,255,0], markerType=cv2.MARKER_CROSS,
-                thickness=4, markerSize=50)
 
-       # Se muestra el resultado de la prediccion y la medicion 
-       cv2.imshow(f'Filtro de kalman', img)
-       cv2.waitKey(0)
+# Ejemplo de uso del modelo para detección de piel en una imagen
+# estática
+if __name__ == '__main__':
+      # Se lee la imagen y se transforma al formato HSV, y se toman solamente los canales HS 
+      img_bgr = cv2.imread('cara_5.JPEG')
+      img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+      img_hs = img_hsv[:,:,:2]
+      
+      img_piel_prob = piel_pdf(img_hs) * 0.40 # Priori de piel en la imagen de muestra
+      img_fondo_prob = fondo_pdf(img_hs) * 0.60 # Priori de fondo en la imagen de muestra
+      
+      # Aplicamos np.where sobre la imagen. Los pixeles detectados como fondo
+      # se pintan de blanco, los demas se mantienen con el color original
+      img_res = np.where(img_fondo_prob[..., None] > img_piel_prob[..., None], 
+                     [255,255,255], img_bgr)
+      
+      # Se regresa al formato original
+      img_res = np.array(img_res, dtype=np.uint8)
+      # Se muestra el resultado de la clasificacion
+      cv2.namedWindow('Seleccion de piel', cv2.WINDOW_NORMAL)
+      cv2.resizeWindow('Seleccion de piel', 600, 400)
+      cv2.imshow('Seleccion de piel', img_res)
+      cv2.waitKey(0)
+      cv2.destroyAllWindows()
 
     
