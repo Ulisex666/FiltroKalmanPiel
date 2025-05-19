@@ -56,7 +56,11 @@ kalman_midpoint.errorCovPost = error_cov
 init = np.array([320, 240, 0, 0], dtype=np.float32)
 kalman_midpoint.statePost = init
 
-while True:
+# Se limita el número de frames a mostrar
+frame_count = 0
+
+while True:    
+    
     # Se elige la imagen y se aplica la funcion para detectar el rostro
     ret, frame = cam.read()
     top_left, top_rigth, bottom_left, bottom_right, mid_point = get_face_roi(frame)
@@ -75,7 +79,7 @@ while True:
     # Posicion predicha en rojo
     cv2.drawMarker(frame, (y_predict, x_predict), color=[0, 0, 255], markerType=cv2.MARKER_STAR, thickness=4, markerSize=20)
     cv2.putText(frame, f"Prediccion (x, y): ({x_predict}, {y_predict})", 
-                (mid_point[0] + 10, mid_point[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0 , 0), 2)  
+                (y_predict +10 , x_predict - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0 , 0), 2)  
     
     # Posicion corregida en verde
     cv2.drawMarker(frame, mid_point, color=[0, 255, 0], markerType=cv2.MARKER_CROSS, thickness=4, markerSize=20)
@@ -89,9 +93,13 @@ while True:
     # cv2.drawMarker(frame, (mid_x, mid_y), color=[0,0,255], markerType=cv2.MARKER_SQUARE,
     #             thickness=4, markerSize=50)
 
-
-    cv2.imshow('Camera', frame)
-    # Press 'q' to exit the loop
+    if frame_count % 10 == 0:
+      cv2.imshow('Camera', frame)
+    
+    # Se actualiza el conteo de frames
+    frame_count += 1
+    
+    # Cerrar loop principal con q
     if cv2.waitKey(1) == ord('q'):
         break
 
